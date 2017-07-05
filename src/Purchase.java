@@ -15,4 +15,6 @@ public class Purchase {
 
     @JsonProperty("amount")
     public String amount;
+
+    public int time;
 }
