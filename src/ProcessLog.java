@@ -11,11 +11,44 @@ public class ProcessLog {
     HashMap<String, List<Purchase>> idToPurchases; //ID to purchases map. Length of purchases is max T
     HashMap<String, GraphNode> idToNeighboursGraph; //the graph
     HashMap<String, List<String>> idToAllNeighbours;
-    HashMap<String, List<Integer>> idToTTransactionsInNetwork;
+    HashMap<String, List<Purchase>> idToTTransactionsInNetwork;
 
     int degree;
     int transactionsSize;
     int time;
+
+    public List<Purchase> mergeTillT(Set<List<Purchase>> lists) {
+        List<Purchase> result = new ArrayList<Purchase>();
+
+        int totalSize = 0; // every element in the set
+        System.out.println(lists.size());
+        for (List<Purchase> l : lists) {
+            if(l != null)
+                totalSize += l.size();
+        }
+
+        boolean first;
+        List<Purchase> lowest = lists.iterator().next(); // the list with the lowest item to add
+
+        int minSize = Math.min(this.transactionsSize, totalSize);
+        while (result.size() < minSize) { // while we still have something to add
+            first = true;
+
+            for (List<Purchase> l : lists) {
+                if (!l.isEmpty()) {
+                    if (first) {
+                        lowest = l;
+                        first = false;
+                    } else if (((Integer) l.get(0).time).compareTo(lowest.get(0).time) >= 0) {
+                        lowest = l;
+                    }
+                }
+            }
+            result.add(lowest.get(0));
+            lowest.remove(0);
+        }
+        return result;
+    }
 
     public List<String> doBFSTillDegreeD(HashMap<String, GraphNode> graph, String source) {
         GraphNode srcNode = graph.get(source);
@@ -46,6 +79,7 @@ public class ProcessLog {
     public void setupInitialState(BufferedReader bufferedReader, ObjectMapper mapper) {
         try {
             String line;
+            //populate id to purchases list and id to neighbours map
             while ((line = bufferedReader.readLine()) != null) {
                 HashMap map = mapper.readValue(new StringReader(line), HashMap.class);
                 String eventType = (String) map.get("event_type");
@@ -102,6 +136,16 @@ public class ProcessLog {
         for (String id : idToNeighboursGraph.keySet()) {
             HashMap<String, GraphNode> idToNeighboursGraph = new HashMap<>(this.idToNeighboursGraph);
             idToAllNeighbours.put(id, doBFSTillDegreeD(idToNeighboursGraph, id));
+        }
+        //now populate id to T transactions in id's social network
+        for (String id : idToNeighboursGraph.keySet()) {
+            Set<List<Purchase>> revSortedPurchasesAllNeighs = new HashSet<>();
+            for (String neigh : idToAllNeighbours.get(id)) {
+                if(idToPurchases.get(neigh) != null)
+                    revSortedPurchasesAllNeighs.add(idToPurchases.get(neigh));
+            }
+            //merge all and only retain first T
+                idToTTransactionsInNetwork.put(id, mergeTillT(revSortedPurchasesAllNeighs));
         }
 
     }
