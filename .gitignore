@@ -1,0 +1,7 @@
+*.swp
+*.o
+*.out
+*.s
+*.class
+*.xml
+*.iml
