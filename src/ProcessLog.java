@@ -29,8 +29,9 @@ public class ProcessLog {
                     case "purchase": { //add recent T purchases to each id
                         Purchase purchase = mapper.readValue(line, Purchase.class);
                         purchase.time = this.time;
-                        if (idToPurchases.containsKey(purchase.id)) { //remove last purchase, add new one
-                            List<Purchase> purchases = idToPurchases.get(purchase.id);
+                        String id = purchase.id;
+                        if (idToPurchases.containsKey(id)) { //remove last purchase, add new one
+                            List<Purchase> purchases = idToPurchases.get(id);
                             if (purchases.size() == transactionsSize) { //first remove
                                 purchases.remove(transactionsSize - 1);
                             }
@@ -38,7 +39,7 @@ public class ProcessLog {
                         } else {
                             List<Purchase> purchases = new ArrayList<>();
                             purchases.add(purchase);
-                            idToPurchases.put(purchase.id, purchases);
+                            idToPurchases.put(id, purchases);
                         }
                         ++this.time;
                         break;
@@ -99,6 +100,13 @@ public class ProcessLog {
             pl.transactionsSize = Integer.parseInt(params.transactions);
 
             pl.setupInitialState(bufferedReader, mapper);
+
+//            for(String key : pl.idToNeighboursGraph.keySet()){
+//                System.out.print(key + " -> ");
+//                for(String n : pl.idToNeighboursGraph.get(key).neighbors)
+//                    System.out.print( n +",");
+//                System.out.println();
+//            }
 
             fileReader.close();
             //now process stream_log
