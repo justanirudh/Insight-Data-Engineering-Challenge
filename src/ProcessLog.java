@@ -12,8 +12,9 @@ public class ProcessLog {
 
     HashMap<String, List<Purchase>> idToPurchases; //ID to purchases map. Length of purchases is max T
     HashMap<String, GraphNode> idToNeighboursGraph; //the graph
-    HashMap<String, List<Integer>> idToTTransactionsInNetwork;
     HashMap<String, List<String>> idToAllNeighbours;
+    HashMap<String, List<Integer>> idToTTransactionsInNetwork;
+
     int degree;
     int transactionsSize;
     int time;
@@ -39,18 +40,35 @@ public class ProcessLog {
                             purchases.add(purchase);
                             idToPurchases.put(purchase.id, purchases);
                         }
+                        ++this.time;
                         break;
                     }
                     case "befriend": {
+                        Befriend befriend = mapper.readValue(line, Befriend.class);
+                        String id1 = befriend.id1;
+                        GraphNode node1 = new GraphNode(id1);
+                        String id2 = befriend.id2;
+                        GraphNode node2 = new GraphNode(id2);
+                        if(!idToNeighboursGraph.containsKey(id1))
+                            idToNeighboursGraph.put(id1, node1);
+                        if(!idToNeighboursGraph.containsKey(id2))
+                            idToNeighboursGraph.put(id2, node2);
+                        node1.neighbors.add(id2);
+                        node2.neighbors.add(id1);
                         break;
                     }
                     case "unfriend": {
+                        Unfriend unfriend = mapper.readValue(line, Unfriend.class);
+                        String id1 = unfriend.id1;
+                        String id2 = unfriend.id2;
+                        idToNeighboursGraph.get(id1).neighbors.remove(id2);
+                        idToNeighboursGraph.get(id2).neighbors.remove(id1);
                         break;
                     }
                     default:
                         throw new IOException();
                 }
-                ++this.time;
+
             }
         } catch (IOException e) {
             e.printStackTrace();
